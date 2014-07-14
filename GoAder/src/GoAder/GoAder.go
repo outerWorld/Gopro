@@ -1,19 +1,19 @@
 package main
 
 import (
+    "os"
+    //"io"
     "fmt"
-    "time"
+    //"time"
+    //"net/http"
 )
 
-func fcgi() {
-    fmt.Println("Go fcgi")
+//usage = func(program_name string) {
+func usage(program_name string) {
+    fmt.Fprintf(os.Stdout, "Usage:%s\n", program_name)
 }
 
 func main() {
-    fmt.Println("GoAder start to run.")
-    go fcgi()
-    for i := 0; i == 0; i=i {
-        fmt.Println("wait")
-        time.Sleep(3)
-    }
+    args := os.Args
+    fmt.Fprintf(os.Stdout, "%s start to run.\n", args[0])
 }
