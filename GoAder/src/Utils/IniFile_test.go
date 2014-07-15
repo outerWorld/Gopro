@@ -16,13 +16,15 @@ import(
 //}
 
 func TestIniFile(t *testing.T) {
-	var test_str = " abc = 1234"
+	var test_str = " abc 1234="
 	equalsign_pos := strings.IndexFunc(test_str, isEqualitySign)
 	if equalsign_pos == -1 {
 		t.Errorf("can not find equality sign =\n")
 		return
 	}
 	key := test_str[:equalsign_pos]
-	value := test_str[equalsign_pos:]
+	value := test_str[equalsign_pos+1:]
+	t.Logf("key[%s], value[%s]\n", key, value)
+	//t.Errorf("key[%s], value[%s]\n", key, value)
 	fmt.Printf("key[%s], value[%s]\n", key, value)
 }
