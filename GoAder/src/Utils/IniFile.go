@@ -24,14 +24,14 @@ func NewSegmentData(key, value string)(*SegmentData) {
     return &SegmentData{key, []string{value}}
 }
 
-func (sd SegmentData) Print() {
+func (sd SegmentData) print() {
     fmt.Printf("\t[%s]: ", sd.key)
     for _, value := range sd.values {
         fmt.Printf("[%s], ", value)
     }
 }
 
-func (sd SegmentData) Match(key string) bool {
+func (sd SegmentData) match(key string) bool {
     if sd.key == key {
         return true
     } else {
@@ -39,7 +39,7 @@ func (sd SegmentData) Match(key string) bool {
     }
 }
 
-func (sd *SegmentData) Append(value string) bool {
+func (sd *SegmentData) append(value string) bool {
     for _, val := range sd.values {
         if val == value {
             return true
@@ -66,22 +66,22 @@ func (f IniFile) Print() {
     for sec_name, data_array := range f.sections {
         fmt.Printf("section[%s]:\n", sec_name)
         for _, data := range data_array {
-            data.Print()
+            data.print()
         }
         fmt.Print("\n")
     }
 }
 
-func (f *IniFile) Add(section_name, key_name, value string) bool {
+func (f *IniFile) add(section_name, key_name, value string) bool {
     data_array, result := f.sections[section_name]
     if result == false {
         f.sections[section_name] = []SegmentData{*NewSegmentData(key_name, value)}
     } else {
         found := false
         for pos, data := range data_array {
-            if data.Match(key_name) {
+            if data.match(key_name) {
                 data_addr := &f.sections[section_name][pos]
-                data_addr.Append(value)
+                data_addr.append(value)
                 found = true
                 break
             }
@@ -100,7 +100,7 @@ func (f *IniFile) Get(section_name, key_name string)(value []string, result bool
         return nil, false
     }
     for _, data := range data_array {
-        if data.Match(key_name) {
+        if data.match(key_name) {
             return data.values, true
         }
     }
@@ -171,8 +171,20 @@ func stringEscape(str string) string {
                 } else {
                     first_hex_char = rune_char
                 }
+            case 'N', 'T': // new line; Tab
+                if slash_sign_flag == true && first_hex_char == -1 {
+                    if rune_char == 'N' {
+                        temp_buf[escaped_len] = 0x0A // "\n"
+                    } else if rune_char == 'T' {
+                        temp_buf[escaped_len] = 0x09 // "\t"
+                    }
+                    escaped_len += 1
+                    slash_sign_flag = false
+                    continue
+                }
+                fallthrough
             default:
-                // like the case: \!
+                // like the case: "\!"
                 if slash_sign_flag == true {
                     temp_buf[escaped_len] = '\\'
                     escaped_len += 1
@@ -229,7 +241,7 @@ func InitIniFile(file_name string) (f *IniFile, r bool) {
         key = strings.Trim(key, " \t")
         value = stringEscape(strings.Trim(value, " \t"))
 		//fmt.Printf("section[%s] line[%s], it's: key[%s], value[%s]\n", section_name, line, key, value)
-        ini_file.Add(section_name, key, value)
+        ini_file.add(section_name, key, value)
     }
 
     //ini_file.Print()
