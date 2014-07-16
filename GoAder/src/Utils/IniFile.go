@@ -16,20 +16,96 @@ import(
 )
 
 type SegmentData struct {
-    key string
-    values []string     // the key may be mapped to multi-values
+    key     string
+    values  []string     // the key may be mapped to multi-values
+}
+
+func NewSegmentData(key, value string)(*SegmentData) {
+    return &SegmentData{key, []string{value}}
+}
+
+func (sd SegmentData) Print() {
+    fmt.Printf("\t[%s]: ", sd.key)
+    for _, value := range sd.values {
+        fmt.Printf("[%s], ", value)
+    }
+}
+
+func (sd SegmentData) Match(key string) bool {
+    if sd.key == key {
+        return true
+    } else {
+        return false
+    }
+}
+
+func (sd *SegmentData) Append(value string) bool {
+    for _, val := range sd.values {
+        if val == value {
+            return true
+        }
+    }
+    sd.values = append(sd.values, value)
+
+    return true
 }
 
 type IniFile struct {
     sections map[string] []SegmentData
 }
 
-func (f *IniFile) Close() {
-    fmt.Printf("IniFile object destruct\n")
+// create an empty one.
+func NewIniFile() (*IniFile) {
+    return &IniFile{map[string] []SegmentData{}}
 }
 
-func (f *IniFile) Get(section_name, key_name string)(value string, result bool){
-	return "ok",true
+func (f *IniFile) Destroy() {
+}
+
+func (f IniFile) Print() {
+    for sec_name, data_array := range f.sections {
+        fmt.Printf("section[%s]:\n", sec_name)
+        for _, data := range data_array {
+            data.Print()
+        }
+        fmt.Print("\n")
+    }
+}
+
+func (f *IniFile) Add(section_name, key_name, value string) bool {
+    data_array, result := f.sections[section_name]
+    if result == false {
+        f.sections[section_name] = []SegmentData{*NewSegmentData(key_name, value)}
+    } else {
+        found := false
+        for pos, data := range data_array {
+            if data.Match(key_name) {
+                data_addr := &f.sections[section_name][pos]
+                data_addr.Append(value)
+                found = true
+                break
+            }
+        }
+        if found == false {
+            f.sections[section_name] = append(f.sections[section_name], *NewSegmentData(key_name, value))
+        }
+    }
+
+    return true
+}
+
+func (f *IniFile) Get(section_name, key_name string)(value []string, result bool){
+    data_array, result := f.sections[section_name]
+    if result == false {
+        return nil, false
+    }
+    for _, data := range data_array {
+        if data.Match(key_name) {
+            return data.values, true
+        }
+    }
+
+    return nil, false
 }
 
 // It assumes that the '#' at the front of line (after skip space and tab characters) marks the line COMMENT flag.
@@ -118,8 +194,8 @@ func stringEscape(str string) string {
 
 //
 // Read and Parse the INI file.
-func IniFileInit(file_name string) (f *IniFile, r bool) {
-    ini_file := &IniFile{123}
+func InitIniFile(file_name string) (f *IniFile, r bool) {
+    ini_file := NewIniFile()
 
     input_file, input_error := os.Open(file_name)
     if input_error != nil {
@@ -152,8 +228,11 @@ func IniFileInit(file_name string) (f *IniFile, r bool) {
 		value := line[equalsign_pos+1:]
         key = strings.Trim(key, " \t")
         value = stringEscape(strings.Trim(value, " \t"))
-		fmt.Printf("section[%s] line[%s], it's: key[%s], value[%s]\n", section_name, line, key, value)
+		//fmt.Printf("section[%s] line[%s], it's: key[%s], value[%s]\n", section_name, line, key, value)
+        ini_file.Add(section_name, key, value)
     }
+
+    //ini_file.Print()
 
     return ini_file, true
 }

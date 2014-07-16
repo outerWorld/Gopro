@@ -17,11 +17,14 @@ func usage(program_name string) {
 func main() {
     args := os.Args
     fmt.Fprintf(os.Stdout, "%s start to run.\n", args[0])
-    ini_obj, result := Utils.IniFileInit("test.ini")
+    ini_obj, result := Utils.InitIniFile("test.ini")
     if result == true {
         fmt.Printf("The result of Parsing %s is success\n", "test.ini")
     } else {
         fmt.Printf("The result of Parsing %s is failed\n", "test.ini")
     }
-    defer ini_obj.Close()
+
+    defer ini_obj.Destroy()
+
+    ini_obj.Print()
 }
